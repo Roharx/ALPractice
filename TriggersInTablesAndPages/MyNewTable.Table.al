@@ -31,7 +31,7 @@ table 50101 "My New Table"
             var
                 Item: Record Item;
             begin
-                if Page.RunModal(0, Item) = Action::LookupOK then
+                if Page.RunModal(Page::"Item List", Item) = Action::LookupOK then
                     Rec."Item No." := Item."No.";
             end;
         }
