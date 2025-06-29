@@ -1,65 +1,89 @@
-# AL Practice – Table and Page Triggers
-
-This project contains a simple AL table and list page to demonstrate the use of triggers and best practices in Business Central development.
+# ✨ AL Practice – Table and Page Triggers
 
 ---
 
-## 🔧 Table: `50101 "My New Table"`
+## 🔧 **Table: `50101 "My New Table"`**
 
-### Fields
-- `Code`: Primary key.
-- `Description`: Optional text.
-- `Item No.`: Item reference, with validation and lookup.
-- `Created At`: Auto-set on insert.
-- `Changed At`: Auto-set on modify.
+### ✅ Table Triggers
 
-### Table Triggers
-- **OnInsert**: Sets `Created At` to `CurrentDateTime`.
-- **OnModify**: Updates `Changed At` to `CurrentDateTime`.
-- **OnRename**: Shows a message with old and new keys.
-- **OnDelete**: Shows a message with the record code.
-- **OnValidate (Item No.)**: Prevents clearing the field if it previously had a value.
-- **OnLookup (Item No.)**: Opens the Item list and assigns selected item number.
+* **`OnInsert`**
+  Sets `"Created At"` to `CurrentDateTime`.
 
----
+* **`OnModify`**
+  Updates `"Changed At"` to `CurrentDateTime`.
 
-## 📄 Page: `50102 "My New Page"`
+* **`OnRename`**
+  Displays a message showing the old key (`xRec.Code`) and the new key (`Rec.Code`).
 
-### Type
-List page based on `My New Table`.
-
-### Layout
-Repeater showing all fields. `"Changed At"` is toggled by a page variable (`IsVisible`).
-
-### Page Triggers
-- **OnOpenPage**: Shows a message and hides `"Changed At"` field.
-- **OnAfterGetRecord**: Fires for each record retrieved; shows a message.
-- **OnAfterGetCurrRecord**: Fires when navigating or selecting; auto-fills description if empty.
-- **OnQueryClosePage**: Asks for confirmation before closing the page.
-- **OnClosePage**: Shows a message after the page is closed.
+* **`OnDelete`**
+  Displays a message confirming deletion of the record (`Rec.Code`).
 
 ---
 
-## ✅ Best Practices
+### 📌 Field-Level Triggers
 
-### Table Logic
-- Business logic (validation, timestamps) should live in the **table triggers**.
-- Avoid writing UI-related logic in table objects.
+#### **`Item No.` – `OnValidate`**
 
-### Page Logic
-- Use **OnOpenPage** to initialize variables.
-- Use **OnAfterGetRecord** for logic tied to each record (e.g. formatting).
-- Use **OnAfterGetCurrRecord** for user-specific actions (e.g. auto-filling).
-- Avoid modifying data directly in page triggers unless necessary.
+Prevents the field from being cleared once it has a value:
 
-### General
-- Use messages for debugging/testing only — remove or disable in production.
-- Keep triggers short and readable.
-- Use proper naming, spacing, and structure.
+```al
+if (xRec."Item No." <> '') and (Rec."Item No." = '') then
+    Error('You cannot have an empty Item No. on this record.');
+```
+
+* `xRec."Item No." <> ''` → the previous value was not empty
+* `Rec."Item No." = ''` → the user tried to clear the value
 
 ---
 
-## 📁 Files
-- `50101 My New Table.al`: Contains table with field logic and events.
-- `50102 My New Page.al`: List page with page-level logic and UI control.
+#### **`Item No.` – `OnLookup`**
 
+Allows the user to select an item from the Item list:
+
+```al
+if Page.RunModal(Page::"Item List", Item) = Action::LookupOK then
+    Rec."Item No." := Item."No.";
+```
+
+* Opens the **Item List** page.
+* If the user confirms selection, the chosen item number is assigned to `"Item No."`.
+
+---
+
+## 📄 **Page: `50102 "My New Page"`**
+
+### ✏️ Type
+
+* `PageType = List;`
+* `SourceTable = "My New Table";`
+
+### 🗃️ Layout
+
+* `Repeater` displays all fields.
+* `"Changed At"` visibility controlled by a page variable (`IsVisible`).
+
+---
+
+### ⚖️ Page Triggers
+
+* **`OnOpenPage`**
+  Displays a message and hides `"Changed At"`.
+
+* **`OnAfterGetRecord`**
+  Fires for each record retrieved; shows a message.
+
+* **`OnAfterGetCurrRecord`**
+  Fires when navigating/selecting a record. Auto-fills `Description` if it's empty.
+
+* **`OnQueryClosePage`**
+  Asks for confirmation before closing the page.
+
+* **`OnClosePage`**
+  Displays a message after the page is closed.
+
+---
+
+## 🔹 Best Practice
+
+* Business logic should primarily reside in the **table**.
+* The **page** should be focused on UI interactions and field visibility.
